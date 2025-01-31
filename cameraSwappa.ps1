@@ -5,6 +5,8 @@
 # Usage: Run the script and follow the prompts to select the aircraft and the new cameras.cfg file.
 # Note: This script requires PowerShell 5.1 or later.
 
+## NOTE TO SELF -- CONTINUE TESTING FILE REPLACEMENT ##
+
 function Get-SimulatorPaths {
     $paths = @()
 
