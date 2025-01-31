@@ -1,6 +1,11 @@
 # Changelog
 All changes to this project will be documented here.
 
+##[1.3.1]
+- Updated to detect MSFS 2020 and MSFS 2024 installations from Microsoft Store and Steam.
+- Added user selection prompt for which sim to proceed with.
+
+
 ## [1.3.0]
 - Added more thorough filtering for Microsoft Flight Simulator 2020 and 2024 installations.
 - Ensured registry checking continues across all entries, avoiding an early exit.

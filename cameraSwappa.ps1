@@ -1,45 +1,34 @@
 # cameraSwappa
-# Version: 1.3.0
+# Version: 1.3.1
 # Author: MG
 # Description: This script allows you to easily swap out the cameras.cfg file for a specific aircraft in Microsoft Flight Simulator 2020 or 2024.
 # Usage: Run the script and follow the prompts to select the aircraft and the new cameras.cfg file.
 # Note: This script requires PowerShell 5.1 or later.
 
-function Get-InstallationPaths {
-    param (
-        [string]$registryPath
-    )
+function Get-SimulatorPaths {
     $paths = @()
-    try {
-        $regKeys = Get-ChildItem -Path $registryPath
-        foreach ($key in $regKeys) {
-            # Safely get DisplayName and InstallLocation
-            $displayName = (Get-ItemProperty -Path $key.PSPath -Name "DisplayName" -ErrorAction SilentlyContinue).DisplayName
-            if ($displayName -match "Microsoft Flight Simulator (2020|2024)") {  # Specifically look for 2020 or 2024
-                $installPath = (Get-ItemProperty -Path $key.PSPath -Name "InstallLocation" -ErrorAction SilentlyContinue).InstallLocation
-                if ($installPath) {
-                    $paths += $installPath
-                } else {
-                    Write-Host "No InstallLocation found for $displayName" -ForegroundColor Yellow
-                }
-            }
-        }
-    } catch {
-        Write-Host "Failed to get installation paths from registry: $registryPath" -ForegroundColor Red
+
+    # Check for Microsoft Store version of MSFS 2020 and 2024
+    $msfs2020Path = "C:\Users\$env:USERNAME\AppData\Local\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe"
+    $msfs2024Path = "C:\Users\$env:USERNAME\AppData\Local\Packages\Microsoft.Limitless_8wekyb3d8bbwe"
+    if (Test-Path $msfs2020Path) {
+        $paths += @{ "Sim" = "MSFS 2020"; "Source" = "MS Store"; "Path" = $msfs2020Path }
     }
+    if (Test-Path $msfs2024Path) {
+        $paths += @{ "Sim" = "MSFS 2024"; "Source" = "MS Store"; "Path" = $msfs2024Path }
+    }
+
+    # Check for Steam version of MSFS
+    $steamPath = "C:\Users\$env:USERNAME\AppData\Roaming\Microsoft Flight Simulator"
+    if (Test-Path $steamPath) {
+        $paths += @{ "Sim" = "Steam MSFS"; "Source" = "Steam"; "Path" = $steamPath }
+    }
+
     return $paths
 }
 
-# Registry paths for installed applications
-$simRegistryPaths = @(
-    "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
-)
-
-$simInstallationPaths = @()
-foreach ($path in $simRegistryPaths) {
-    $simInstallationPaths += Get-InstallationPaths -registryPath $path
-}
+# Detect available simulators
+$simInstallationPaths = Get-SimulatorPaths
 
 if ($simInstallationPaths.Count -eq 0) {
     Write-Host "No MSFS installation detected." -ForegroundColor Red
@@ -47,20 +36,23 @@ if ($simInstallationPaths.Count -eq 0) {
 }
 
 Write-Host "Detected the following Microsoft Flight Simulator installations:" -ForegroundColor Green
-$simInstallationPaths | ForEach-Object { Write-Host "- $_" }
+$simInstallationPaths | ForEach-Object { Write-Host "- $($_.Sim) ($($_.Source))" }
 
 # Prompt User to Select Sim
 Write-Host "Select your Microsoft Flight Simulator version:" -ForegroundColor Cyan
 for ($i = 0; $i -lt $simInstallationPaths.Count; $i++) {
-    Write-Host "[$i] $($simInstallationPaths[$i])"
+    Write-Host "[$i] $($simInstallationPaths[$i].Sim) ($($simInstallationPaths[$i].Source))"
 }
 $simChoice = Read-Host "Enter the number of your selection"
 $selectedSim = $simInstallationPaths[$simChoice]
 
+Write-Host "You selected $($selectedSim.Sim) ($($selectedSim.Source))"
+
 # Scan for Aircraft
-$officialFolder = "$selectedSim\Official"
-$communityFolder = "$selectedSim\Community"
+$officialFolder = "$($selectedSim.Path)\Official"
+$communityFolder = "$($selectedSim.Path)\Community"
 $aircraftPaths = @(Get-ChildItem -Path $officialFolder -Directory) + @(Get-ChildItem -Path $communityFolder -Directory)
+
 if ($aircraftPaths.Count -eq 0) {
     Write-Host "No aircraft found in the installation folders." -ForegroundColor Red
     exit
