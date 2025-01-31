@@ -1,5 +1,5 @@
 # cameraSwappa
-# Version: 1.3.1
+# Version: 1.3.2
 # Author: MG
 # Description: This script allows you to easily swap out the cameras.cfg file for a specific aircraft in Microsoft Flight Simulator 2020 or 2024.
 # Usage: Run the script and follow the prompts to select the aircraft and the new cameras.cfg file.
@@ -48,10 +48,17 @@ $selectedSim = $simInstallationPaths[$simChoice]
 
 Write-Host "You selected $($selectedSim.Sim) ($($selectedSim.Source))"
 
+# Define aircraft folders for MSFS 2020 and MSFS 2024
+if ($selectedSim.Sim -eq "MSFS 2020") {
+    $officialFolder = "$($selectedSim.Path)\LocalCache\Packages\Community"
+    $aircraftFolder = "$($selectedSim.Path)\LocalCache\SimObjects\Airplanes"
+} elseif ($selectedSim.Sim -eq "MSFS 2024") {
+    $officialFolder = "$($selectedSim.Path)\LocalCache\Packages\Community"
+    $aircraftFolder = "$($selectedSim.Path)\LocalCache\SimObjects\Airplanes"
+}
+
 # Scan for Aircraft
-$officialFolder = "$($selectedSim.Path)\Official"
-$communityFolder = "$($selectedSim.Path)\Community"
-$aircraftPaths = @(Get-ChildItem -Path $officialFolder -Directory) + @(Get-ChildItem -Path $communityFolder -Directory)
+$aircraftPaths = @(Get-ChildItem -Path $aircraftFolder -Directory)
 
 if ($aircraftPaths.Count -eq 0) {
     Write-Host "No aircraft found in the installation folders." -ForegroundColor Red

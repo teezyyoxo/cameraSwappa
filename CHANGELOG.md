@@ -1,7 +1,11 @@
 # Changelog
 All changes to this project will be documented here.
 
-##[1.3.1]
+## [1.3.2]
+- Resolved installed-sim lookup function failure by using static install paths
+- Updated aircraft path locations for MSFS 2020 and MSFS 2024.
+
+## [1.3.1]
 - Updated to detect MSFS 2020 and MSFS 2024 installations from Microsoft Store and Steam.
 - Added user selection prompt for which sim to proceed with.
 
