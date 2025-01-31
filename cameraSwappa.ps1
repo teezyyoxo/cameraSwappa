@@ -1,37 +1,59 @@
 # cameraSwappa
-# Version: 1.0.1
+# Version: 1.1.0
 # Author: MG
 
-# Changelog:
-# - Added console output when a simulator is detected
-
-$MSFSPaths = @{
-    "MSFS 2020" = "C:\Users\$env:USERNAME\AppData\Roaming\Microsoft Flight Simulator"  # Adjust as needed
-    "MSFS 2024" = "C:\Users\$env:USERNAME\AppData\Roaming\Microsoft Flight Simulator 2024"  # Adjust as needed
+function Get-InstallationPaths {
+    param (
+        [string]$registryPath
+    )
+    $paths = @()
+    try {
+        $regKeys = Get-ChildItem -Path $registryPath
+        foreach ($key in $regKeys) {
+            $displayName = (Get-ItemProperty -Path $key.PSPath -Name "DisplayName" -ErrorAction SilentlyContinue).DisplayName
+            if ($displayName -like "*Microsoft Flight Simulator*") {
+                $installPath = (Get-ItemProperty -Path $key.PSPath -Name "InstallLocation" -ErrorAction SilentlyContinue).InstallLocation
+                if ($installPath) {
+                    $paths += $installPath
+                }
+            }
+        }
+    } catch {
+        Write-Host "Failed to get installation paths from registry: $registryPath" -ForegroundColor Red
+    }
+    return $paths
 }
 
-# Detect Installed Sims
-$availableSims = $MSFSPaths.Keys | Where-Object { Test-Path $MSFSPaths[$_] }
-if ($availableSims.Count -eq 0) {
+# Registry paths for installed applications
+$simRegistryPaths = @(
+    "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+)
+
+$simInstallationPaths = @()
+foreach ($path in $simRegistryPaths) {
+    $simInstallationPaths += Get-InstallationPaths -registryPath $path
+}
+
+if ($simInstallationPaths.Count -eq 0) {
     Write-Host "No MSFS installation detected." -ForegroundColor Red
     exit
 }
 
 Write-Host "Detected the following Microsoft Flight Simulator installations:" -ForegroundColor Green
-$availableSims | ForEach-Object { Write-Host "- $_" }
+$simInstallationPaths | ForEach-Object { Write-Host "- $_" }
 
 # Prompt User to Select Sim
 Write-Host "Select your Microsoft Flight Simulator version:" -ForegroundColor Cyan
-for ($i = 0; $i -lt $availableSims.Count; $i++) {
-    Write-Host "[$i] $($availableSims[$i])"
+for ($i = 0; $i -lt $simInstallationPaths.Count; $i++) {
+    Write-Host "[$i] $($simInstallationPaths[$i])"
 }
 $simChoice = Read-Host "Enter the number of your selection"
-$selectedSim = $availableSims[$simChoice]
-$simPath = $MSFSPaths[$selectedSim]
+$selectedSim = $simInstallationPaths[$simChoice]
 
 # Scan for Aircraft
-$officialFolder = "$simPath\Official"
-$communityFolder = "$simPath\Community"
+$officialFolder = "$selectedSim\Official"
+$communityFolder = "$selectedSim\Community"
 $aircraftPaths = @(Get-ChildItem -Path $officialFolder -Directory) + @(Get-ChildItem -Path $communityFolder -Directory)
 if ($aircraftPaths.Count -eq 0) {
     Write-Host "No aircraft found in the installation folders." -ForegroundColor Red
@@ -52,7 +74,7 @@ if (Test-Path $camerasCfgPath) {
     $backupIndex = 0
     do {
         $backupIndex++
-        $backupFile = "$camerasCfgPath.orig$($backupIndex -eq 1 ? '' : ".$backupIndex")"
+        $backupFile = if ($backupIndex -eq 1) { "$camerasCfgPath.orig" } else { "$camerasCfgPath.orig.$backupIndex" }
     } while (Test-Path $backupFile)
     Copy-Item -Path $camerasCfgPath -Destination $backupFile
     Write-Host "Backup created: $backupFile" -ForegroundColor Green
