@@ -1,5 +1,5 @@
 # cameraSwappa
-# Version: 1.1.0
+# Version: 1.2.0
 # Author: MG
 
 function Get-InstallationPaths {
@@ -10,11 +10,14 @@ function Get-InstallationPaths {
     try {
         $regKeys = Get-ChildItem -Path $registryPath
         foreach ($key in $regKeys) {
+            # Safely get DisplayName and InstallLocation
             $displayName = (Get-ItemProperty -Path $key.PSPath -Name "DisplayName" -ErrorAction SilentlyContinue).DisplayName
             if ($displayName -like "*Microsoft Flight Simulator*") {
                 $installPath = (Get-ItemProperty -Path $key.PSPath -Name "InstallLocation" -ErrorAction SilentlyContinue).InstallLocation
                 if ($installPath) {
                     $paths += $installPath
+                } else {
+                    Write-Host "No InstallLocation found for $displayName" -ForegroundColor Yellow
                 }
             }
         }
