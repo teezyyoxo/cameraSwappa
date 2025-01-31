@@ -1,6 +1,9 @@
 # cameraSwappa
-# Version: 1.2.0
+# Version: 1.3.0
 # Author: MG
+# Description: This script allows you to easily swap out the cameras.cfg file for a specific aircraft in Microsoft Flight Simulator 2020 or 2024.
+# Usage: Run the script and follow the prompts to select the aircraft and the new cameras.cfg file.
+# Note: This script requires PowerShell 5.1 or later.
 
 function Get-InstallationPaths {
     param (
@@ -12,7 +15,7 @@ function Get-InstallationPaths {
         foreach ($key in $regKeys) {
             # Safely get DisplayName and InstallLocation
             $displayName = (Get-ItemProperty -Path $key.PSPath -Name "DisplayName" -ErrorAction SilentlyContinue).DisplayName
-            if ($displayName -like "*Microsoft Flight Simulator*") {
+            if ($displayName -match "Microsoft Flight Simulator (2020|2024)") {  # Specifically look for 2020 or 2024
                 $installPath = (Get-ItemProperty -Path $key.PSPath -Name "InstallLocation" -ErrorAction SilentlyContinue).InstallLocation
                 if ($installPath) {
                     $paths += $installPath
